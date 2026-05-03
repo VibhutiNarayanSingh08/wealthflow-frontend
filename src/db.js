@@ -1,7 +1,15 @@
-import Dexie from 'dexie'
+// Dexie — module import for Vite builds, window.Dexie fallback for raw GitHub Pages
+let Dexie;
+try {
+    const dexieMod = await import('dexie');
+    Dexie = dexieMod.default || dexieMod.Dexie;
+} catch (e) {
+    Dexie = window.Dexie;
+    if (!Dexie) console.warn('[DB] Dexie not loaded — offline storage unavailable. Add <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script> to index.html');
+}
 
 // IndexedDB via Dexie for structured, large-scale offline storage
-export const db = new Dexie('WealthFlowDB')
+export const db = Dexie ? new Dexie('WealthFlowDB') : null
 
 // Schema version 1
 db.version(1).stores({
@@ -44,7 +52,10 @@ export async function processSyncQueue() {
 
   for (const item of items) {
     try {
-      const res = await fetch(import.meta.env.VITE_API_BASE + item.endpoint, {
+      const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE)
+          ? import.meta.env.VITE_API_BASE
+          : (window.location.hostname === 'localhost' ? '' : 'https://wealthflow-api-rz5w.onrender.com');
+      const res = await fetch(API_BASE + item.endpoint, {
         method: item.method,
         headers,
         body: item.payload ? JSON.stringify(item.payload) : undefined

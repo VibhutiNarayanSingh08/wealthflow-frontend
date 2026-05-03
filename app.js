@@ -1,4 +1,12 @@
-import Chart from 'chart.js/auto'
+// Chart.js — module import for Vite builds, window.Chart fallback for raw GitHub Pages
+let Chart;
+try {
+    const chartMod = await import('chart.js/auto');
+    Chart = chartMod.default;
+} catch (e) {
+    Chart = window.Chart;
+    if (!Chart) console.warn('[App] Chart.js not loaded — charts will not render. Add <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> to index.html');
+}
 
 // ==================== DATA STORE ====================
 const STORAGE_KEYS = { expenses: 'wf_expenses', investments: 'wf_investments', budgets: 'wf_budgets', recurring: 'wf_recurring', theme: 'wf_theme', token: 'wf_token' };
@@ -270,6 +278,8 @@ window.loadBrokerPortfolio = loadBrokerPortfolio;
 window.toggleImportSection = toggleImportSection;
 window.importMutualFundsFromJson = importMutualFundsFromJson;
 window.filterInvestments = filterInvestments;
+window.handleFormSubmit = handleFormSubmit;
+window.updateCharts = updateCharts;
 
 function updateUserUI() {
     if (!state.user) return;
