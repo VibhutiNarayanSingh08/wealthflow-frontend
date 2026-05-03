@@ -248,6 +248,29 @@ function showAppScreen() {
     console.log('[Auth] App screen shown');
 }
 
+// Expose functions referenced by inline HTML event handlers (module scope is not global)
+window.handleLogin = handleLogin;
+window.handleRegister = handleRegister;
+window.toggleAuthMode = toggleAuthMode;
+window.logout = logout;
+window.navigateTo = navigateTo;
+window.toggleTheme = toggleTheme;
+window.toggleSidebar = toggleSidebar;
+window.openQuickAdd = openQuickAdd;
+window.closeQuickAdd = closeQuickAdd;
+window.quickAddType = quickAddType;
+window.smartAddExpense = smartAddExpense;
+window.quickAddPreset = quickAddPreset;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.filterExpenses = filterExpenses;
+window.toggleCsvImport = toggleCsvImport;
+window.importExpensesCsv = importExpensesCsv;
+window.loadBrokerPortfolio = loadBrokerPortfolio;
+window.toggleImportSection = toggleImportSection;
+window.importMutualFundsFromJson = importMutualFundsFromJson;
+window.filterInvestments = filterInvestments;
+
 function updateUserUI() {
     if (!state.user) return;
     const name = state.user.name || state.user.email.split('@')[0];
