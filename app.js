@@ -1,3 +1,5 @@
+import Chart from 'chart.js/auto'
+
 // ==================== DATA STORE ====================
 const STORAGE_KEYS = { expenses: 'wf_expenses', investments: 'wf_investments', budgets: 'wf_budgets', recurring: 'wf_recurring', theme: 'wf_theme', token: 'wf_token' };
 
@@ -257,7 +259,7 @@ function updateUserUI() {
 
 // ==================== API (with auth) ====================
 // Change this to your production backend URL when deploying
-const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://wealthflow-api-rz5w.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 function apiHeaders() {
     const h = { 'Content-Type': 'application/json' };

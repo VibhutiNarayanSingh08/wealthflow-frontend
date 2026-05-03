@@ -1,0 +1,32 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "A single-page PWA built with vanilla JavaScript, Tailwind CSS, and Chart.js.",
+  "main": "app.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibhutiNarayanSingh08/wealthflow-frontend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/VibhutiNarayanSingh08/wealthflow-frontend/issues"
+  },
+  "homepage": "https://github.com/VibhutiNarayanSingh08/wealthflow-frontend#readme",
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "dexie": "^4.4.2"
+  }
+}
