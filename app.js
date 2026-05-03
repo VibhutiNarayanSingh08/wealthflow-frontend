@@ -82,77 +82,104 @@ function showAuthError(msg) {
 
 async function handleLogin(e) {
     e.preventDefault();
-    const form = e.target;
-    const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email.value, password: form.password.value })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        showAuthError(data.detail || 'Login failed');
-        return;
+    try {
+        const form = e.target;
+        console.log('[Auth] Logging in...');
+        const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: form.email.value, password: form.password.value })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showAuthError(data.detail || 'Login failed');
+            return;
+        }
+        console.log('[Auth] Login success, token received');
+        setToken(data.token);
+        await loadUserSession();
+        console.log('[Auth] loadUserSession complete');
+    } catch (err) {
+        console.error('[Auth] Login error:', err);
+        showAuthError('Something went wrong. Check console.');
     }
-    setToken(data.token);
-    await loadUserSession();
 }
 
 async function handleRegister(e) {
     e.preventDefault();
-    const form = e.target;
-    const res = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email.value, password: form.password.value, name: form.name.value })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        showAuthError(data.detail || 'Registration failed');
-        return;
+    try {
+        const form = e.target;
+        console.log('[Auth] Registering...');
+        const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: form.email.value, password: form.password.value, name: form.name.value })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showAuthError(data.detail || 'Registration failed');
+            return;
+        }
+        console.log('[Auth] Register success, token received');
+        setToken(data.token);
+        await loadUserSession();
+        console.log('[Auth] loadUserSession complete');
+    } catch (err) {
+        console.error('[Auth] Register error:', err);
+        showAuthError('Something went wrong. Check console.');
     }
-    setToken(data.token);
-    await loadUserSession();
 }
 
 async function loadUserSession() {
-    const token = getToken();
-    if (!token) { showAuthScreen(); return; }
+    try {
+        const token = getToken();
+        if (!token) { showAuthScreen(); return; }
 
-    // Validate token and get user profile
-    const meRes = await apiGet('/auth/me');
-    if (!meRes || meRes.detail) {
-        clearToken();
+        console.log('[Auth] Validating token...');
+        // Validate token and get user profile
+        const meRes = await apiGet('/auth/me');
+        if (!meRes || meRes.detail) {
+            console.log('[Auth] Token invalid, showing login');
+            clearToken();
+            showAuthScreen();
+            showAuthError('Session expired. Please sign in again.');
+            return;
+        }
+
+        state.user = meRes;
+        updateUserUI();
+        console.log('[Auth] User loaded:', meRes.email);
+
+        // Load user data from backend
+        console.log('[Auth] Fetching user data...');
+        const [expRes, invRes, budRes, recRes] = await Promise.all([
+            apiGet('/api/expenses'),
+            apiGet('/api/investments'),
+            apiGet('/api/budgets'),
+            apiGet('/api/recurring')
+        ]);
+
+        if (expRes) state.expenses = expRes;
+        if (invRes) state.investments = invRes.map(i => ({ ...i, currentValue: i.current_value }));
+        if (budRes) state.budgets = budRes.map(b => ({ ...b, limit: b.limit_amount || b.limit }));
+        if (recRes) state.recurring = recRes;
+        console.log('[Auth] Data loaded:', state.expenses.length, 'expenses');
+
+        // Fallback: seed demo data if completely empty (first time user)
+        if (state.expenses.length === 0 && state.investments.length === 0) {
+            seedSampleData();
+            await syncAllToBackend();
+        }
+
+        saveDataLocal();
+        showAppScreen();
+        initApp();
+        console.log('[Auth] App initialized');
+    } catch (err) {
+        console.error('[Auth] loadUserSession error:', err);
         showAuthScreen();
-        showAuthError('Session expired. Please sign in again.');
-        return;
+        showAuthError('Failed to load session. Check console.');
     }
-
-    state.user = meRes;
-    updateUserUI();
-
-    // Load user data from backend
-    const [expRes, invRes, budRes, recRes] = await Promise.all([
-        apiGet('/api/expenses'),
-        apiGet('/api/investments'),
-        apiGet('/api/budgets'),
-        apiGet('/api/recurring')
-    ]);
-
-    if (expRes) state.expenses = expRes;
-    if (invRes) state.investments = invRes.map(i => ({ ...i, currentValue: i.current_value }));
-    if (budRes) state.budgets = budRes.map(b => ({ ...b, limit: b.limit_amount || b.limit }));
-    if (recRes) state.recurring = recRes;
-
-    // Fallback: seed demo data if completely empty (first time user)
-    if (state.expenses.length === 0 && state.investments.length === 0) {
-        seedSampleData();
-        // Sync seeded data to backend
-        await syncAllToBackend();
-    }
-
-    saveDataLocal();
-    showAppScreen();
-    initApp();
 }
 
 function logout() {
@@ -166,13 +193,18 @@ function logout() {
 }
 
 function showAuthScreen() {
-    document.getElementById('authScreen').classList.remove('hidden');
-    document.getElementById('app').classList.add('hidden');
+    const auth = document.getElementById('authScreen');
+    const app = document.getElementById('app');
+    if (auth) { auth.classList.remove('hidden'); auth.style.display = 'flex'; }
+    if (app) { app.classList.add('hidden'); app.style.display = 'none'; }
 }
 
 function showAppScreen() {
-    document.getElementById('authScreen').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
+    const auth = document.getElementById('authScreen');
+    const app = document.getElementById('app');
+    if (auth) { auth.classList.add('hidden'); auth.style.display = 'none'; }
+    if (app) { app.classList.remove('hidden'); app.style.display = 'flex'; }
+    console.log('[Auth] App screen shown');
 }
 
 function updateUserUI() {
@@ -363,9 +395,15 @@ async function loadBrokerPortfolio() {
 
 // ==================== NAVIGATION ====================
 function navigateTo(page) {
+    console.log('[Nav] Navigating to:', page);
     state.currentPage = page;
     document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
-    document.getElementById(`page-${page}`).classList.remove('hidden');
+    const pageEl = document.getElementById(`page-${page}`);
+    if (pageEl) {
+        pageEl.classList.remove('hidden');
+    } else {
+        console.error('[Nav] Page element not found:', `page-${page}`);
+    }
     
     document.querySelectorAll('.nav-item').forEach(el => {
         el.classList.remove('nav-active');
@@ -384,8 +422,12 @@ function navigateTo(page) {
         budgets: ['Budgets', 'Set and track spending limits'],
         analytics: ['Analytics', 'Deep dive into your finances']
     };
-    document.getElementById('pageTitle').textContent = titles[page][0];
-    document.getElementById('pageSubtitle').textContent = titles[page][1];
+    const titleEl = document.getElementById('pageTitle');
+    const subtitleEl = document.getElementById('pageSubtitle');
+    if (titles[page]) {
+        if (titleEl) titleEl.textContent = titles[page][0];
+        if (subtitleEl) subtitleEl.textContent = titles[page][1];
+    }
     
     renderPage(page);
     if (window.innerWidth < 1024) {
@@ -1473,7 +1515,11 @@ function init() {
 }
 
 function initApp() {
-    navigateTo('dashboard');
+    try {
+        navigateTo('dashboard');
+    } catch (err) {
+        console.error('[Init] initApp error:', err);
+    }
 }
 
 // Event listeners
