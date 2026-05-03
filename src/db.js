@@ -12,26 +12,31 @@ try {
 export const db = Dexie ? new Dexie('WealthFlowDB') : null
 
 // Schema version 1
-db.version(1).stores({
-  expenses: 'id, user_id, date, category, synced',
-  investments: 'id, user_id, date, type, synced',
-  budgets: 'id, user_id, category, synced',
-  recurring: 'id, user_id, category, active, synced',
-  syncQueue: '++id, method, endpoint, payload, timestamp'
-})
+if (db) {
+  db.version(1).stores({
+    expenses: 'id, user_id, date, category, synced',
+    investments: 'id, user_id, date, type, synced',
+    budgets: 'id, user_id, category, synced',
+    recurring: 'id, user_id, category, active, synced',
+    syncQueue: '++id, method, endpoint, payload, timestamp'
+  })
+}
 
 // Helper: get all unsynced items
 export async function getUnsynced(table) {
+  if (!db) return []
   return await db[table].where({ synced: 0 }).toArray()
 }
 
 // Helper: mark as synced
 export async function markSynced(table, id) {
+  if (!db) return
   await db[table].update(id, { synced: 1 })
 }
 
 // Helper: add to sync queue for background sync
 export async function queueSync(method, endpoint, payload) {
+  if (!db) return
   await db.syncQueue.add({ method, endpoint, payload, timestamp: Date.now() })
   // Trigger background sync if available
   if ('serviceWorker' in navigator && 'sync' in navigator.serviceWorker.registration) {
@@ -41,6 +46,7 @@ export async function queueSync(method, endpoint, payload) {
 
 // Process sync queue — called when back online
 export async function processSyncQueue() {
+  if (!db) return
   const items = await db.syncQueue.orderBy('timestamp').toArray()
   const token = localStorage.getItem('token')
   if (!token) return
@@ -76,12 +82,14 @@ export async function processSyncQueue() {
 
 // Sync all local data to backend
 export async function syncAllToBackend() {
+  if (!db) return
   await processSyncQueue()
   // Additional sync logic can be added here
 }
 
 // Migrate from localStorage to IndexedDB (one-time)
 export async function migrateFromLocalStorage() {
+  if (!db) return
   const keys = ['expenses', 'investments', 'budgets', 'recurring']
   for (const key of keys) {
     const data = localStorage.getItem(`wealthflow-${key}`)

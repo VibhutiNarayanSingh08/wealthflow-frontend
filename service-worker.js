@@ -1,13 +1,13 @@
 const CACHE_NAME = 'wealthflow-v3'
 const SHELL_ASSETS = [
-  '/',
-  '/index.html',
-  '/src/main.js',
-  '/src/db.js',
-  '/app.js',
-  '/styles.css',
-  '/tailwind-config.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './src/main.js',
+  './src/db.js',
+  './app.js',
+  './styles.css',
+  './tailwind-config.js',
+  './manifest.json'
 ]
 
 // Install: cache shell
