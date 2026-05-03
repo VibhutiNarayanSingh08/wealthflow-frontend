@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WealthFlow">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <title>WealthFlow - Personal Finance Manager</title>
+    <script src="tailwind-config.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.16/index.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="font-sans min-h-screen">
+
+<!-- Auth Screen -->
+<div id="authScreen" class="fixed inset-0 z-[60] flex items-center justify-center p-4" style="background: var(--bg-body);">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center shadow-lg shadow-brand-500/30 mx-auto mb-4">
+                <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">WealthFlow</h1>
+            <p class="text-sm text-muted mt-1">Your personal finance companion</p>
+        </div>
+
+        <div id="authFormContainer" class="glass rounded-2xl p-6">
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
+                <h2 class="text-xl font-bold mb-1">Welcome back</h2>
+                <p class="text-sm text-muted mb-4">Sign in to your account</p>
+                <div>
+                    <label class="block text-sm font-medium mb-1.5 text-secondary">Email</label>
+                    <input type="email" name="email" required class="w-full px-4 py-2.5 rounded-xl bg-input border border-input text-sm transition-colors" placeholder="you@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1.5 text-secondary">Password</label>
+                    <input type="password" name="password" required minlength="6" class="w-full px-4 py-2.5 rounded-xl bg-input border border-input text-sm transition-colors" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 font-medium text-sm transition-all shadow-lg shadow-brand-600/25 text-white">Sign In</button>
+                <p class="text-center text-sm text-muted">
+                    Don't have an account? 
+                    <button type="button" onclick="toggleAuthMode()" class="text-brand-400 hover:text-brand-300 font-medium">Create one</button>
+                </p>
+            </form>
+
+            <!-- Register Form (hidden by default) -->
+            <form id="registerForm" class="hidden space-y-4" onsubmit="handleRegister(event)">
+                <h2 class="text-xl font-bold mb-1">Get started</h2>
+                <p class="text-sm text-muted mb-4">Create your free account</p>
+                <div>
+                    <label class="block text-sm font-medium mb-1.5 text-secondary">Name</label>
+                    <input type="text" name="name" class="w-full px-4 py-2.5 rounded-xl bg-input border border-input text-sm transition-colors" placeholder="Your name">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1.5 text-secondary">Email</label>
+                    <input type="email" name="email" required class="w-full px-4 py-2.5 rounded-xl bg-input border border-input text-sm transition-colors" placeholder="you@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1.5 text-secondary">Password</label>
+                    <input type="password" name="password" required minlength="6" class="w-full px-4 py-2.5 rounded-xl bg-input border border-input text-sm transition-colors" placeholder="Min 6 characters">
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 font-medium text-sm transition-all shadow-lg shadow-brand-600/25 text-white">Create Account</button>
+                <p class="text-center text-sm text-muted">
+                    Already have an account? 
+                    <button type="button" onclick="toggleAuthMode()" class="text-brand-400 hover:text-brand-300 font-medium">Sign in</button>
+                </p>
+            </form>
+
+            <div id="authError" class="hidden mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm text-center"></div>
+        </div>
+
+        <p class="text-center text-xs text-muted mt-6">Add to Home Screen for the best mobile experience</p>
+    </div>
+</div>
+
+<div id="app" class="flex min-h-screen hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed lg:relative z-50 w-64 h-screen glass border-r border-theme transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="p-6 flex items-center gap-3 border-b border-theme">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center shadow-lg shadow-brand-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-xl font-bold bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">WealthFlow</h1>
+                <p class="text-xs text-muted">Finance Manager</p>
+            </div>
+        </div>
+        
+        <nav class="p-4 space-y-1">
+            <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 hover:bg-hover nav-active">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <span class="font-medium">Dashboard</span>
+            </button>
+            <button onclick="navigateTo('expenses')" id="nav-expenses" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 hover:bg-hover text-secondary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-6 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                <span class="font-medium">Expenses</span>
+            </button>
+            <button onclick="navigateTo('investments')" id="nav-investments" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 hover:bg-hover text-secondary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                <span class="font-medium">Investments</span>
+            </button>
+            <button onclick="navigateTo('budgets')" id="nav-budgets" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 hover:bg-hover text-secondary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <span class="font-medium">Budgets</span>
+            </button>
+            <button onclick="navigateTo('analytics')" id="nav-analytics" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 hover:bg-hover text-secondary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="font-medium">Analytics</span>
+            </button>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-theme">
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-input">
+                <div id="userAvatar" class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-sm font-bold text-white">?</div>
+                <div class="flex-1 min-w-0">
+                    <p id="userName" class="text-sm font-medium truncate">Guest</p>
+                    <p id="userEmail" class="text-xs text-muted truncate">Not logged in</p>
+                </div>
+                <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-hover transition-colors tooltip" data-tip="Toggle Theme">
+                    <svg id="themeIcon" class="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </button>
+                <button onclick="logout()" class="p-2 rounded-lg hover:bg-rose-500/20 transition-colors tooltip" data-tip="Logout">
+                    <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0">
+        <!-- Top Bar -->
+        <header class="sticky top-0 z-30 glass border-b border-theme px-4 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl hover:bg-hover transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <div>
+                        <h2 id="pageTitle" class="text-xl lg:text-2xl font-bold">Dashboard</h2>
+                        <p id="pageSubtitle" class="text-sm text-muted hidden sm:block">Your financial overview at a glance</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openQuickAdd()" class="p-2 rounded-xl bg-brand-600 hover:bg-brand-500 transition-colors tooltip" data-tip="Quick Add">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div id="pageContent" class="p-4 lg:p-8">
+            <!-- Dashboard Page -->
+            <div id="page-dashboard" class="page-content fade-in">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-8">
+                    <div class="glass rounded-2xl p-5 card-hover slide-up" style="animation-delay: 0.05s">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-emerald-400 bg-emerald-500/20 px-2 py-1 rounded-full">+12.5%</span>
+                        </div>
+                        <p class="text-sm text-muted mb-1">Total Balance</p>
+                        <p id="totalBalance" class="text-2xl font-bold">Rs. 0.00</p>
+                    </div>
+                    <div class="glass rounded-2xl p-5 card-hover slide-up" style="animation-delay: 0.1s">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-rose-400 bg-rose-500/20 px-2 py-1 rounded-full" id="expenseTrend">This Month</span>
+                        </div>
+                        <p class="text-sm text-muted mb-1">Monthly Expenses</p>
+                        <p id="monthlyExpenses" class="text-2xl font-bold">Rs. 0.00</p>
+                    </div>
+                    <div class="glass rounded-2xl p-5 card-hover slide-up" style="animation-delay: 0.15s">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-brand-500/20 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-brand-400 bg-brand-500/20 px-2 py-1 rounded-full">Portfolio</span>
+                        </div>
+                        <p class="text-sm text-muted mb-1">Investment Value</p>
+                        <p id="investmentValue" class="text-2xl font-bold">Rs. 0.00</p>
+                    </div>
+                    <div class="glass rounded-2xl p-5 card-hover slide-up" style="animation-delay: 0.2s">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </div>
+                            <span class="text-xs font-medium text-amber-400 bg-amber-500/20 px-2 py-1 rounded-full">Savings Rate</span>
+                        </div>
+                        <p class="text-sm text-muted mb-1">Net Worth</p>
+                        <p id="netWorth" class="text-2xl font-bold">Rs. 0.00</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
+                    <div class="lg:col-span-2 glass rounded-2xl p-5 slide-up" style="animation-delay: 0.25s">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Spending Trends</h3>
+                            <select id="chartPeriod" class="bg-input border border-input rounded-lg px-3 py-1 text-sm" onchange="updateCharts()">
+                                <option value="3" selected>Last 3 Months</option>
+                                <option value="6">Last 6 Months</option>
+                                <option value="12">Last 12 Months</option>
+                            </select>
+                        </div>
+                        <div class="h-52 sm:h-60 lg:h-64">
+                            <canvas id="spendingChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl p-5 slide-up" style="animation-delay: 0.3s">
+                        <h3 class="text-lg font-semibold mb-4">Expense Categories</h3>
+                        <div class="h-52 sm:h-60 lg:h-64">
+                            <canvas id="categoryChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions & Quick Stats -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                    <div class="glass rounded-2xl p-5 slide-up" style="animation-delay: 0.35s">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Recent Transactions</h3>
+                            <button onclick="navigateTo('expenses')" class="text-sm text-brand-400 hover:text-brand-300 transition-colors">View All →</button>
+                        </div>
+                        <div id="recentTransactions" class="space-y-3 max-h-80 overflow-y-auto"></div>
+                    </div>
+                    <div class="glass rounded-2xl p-5 slide-up" style="animation-delay: 0.4s">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Budget Overview</h3>
+                            <button onclick="navigateTo('budgets')" class="text-sm text-brand-400 hover:text-brand-300 transition-colors">Manage →</button>
+                        </div>
+                        <div id="budgetOverview" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses Page -->
+            <div id="page-expenses" class="page-content hidden">
+                <!-- Smart Quick Input -->
+                <div class="glass rounded-2xl p-4 mb-5">
+                    <label class="block text-sm font-medium mb-2 text-secondary">Quick Add</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="smartExpenseInput" placeholder="Type like 'Swiggy 450' or 'Petrol 1020'..." 
+                            class="flex-1 px-4 py-2.5 rounded-xl bg-input border border-input text-sm transition-colors" 
+                            onkeydown="if(event.key==='Enter')smartAddExpense()">
+                        <button onclick="smartAddExpense()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 font-medium text-sm transition-all text-white">Add</button>
+                    </div>
+                    <p class="text-xs text-muted mt-1.5">Examples: "Zomato 320", "Metro recharge 199", "Medicine 180 health"</p>
+                </div>
+
+                <!-- Quick Presets -->
+                <div class="mb-5">
+                    <h3 class="text-sm font-medium text-secondary mb-3">Common Expenses — click to add</h3>
+                    <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
+                        <button onclick="quickAddPreset('coffee', 50)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">☕</div>
+                            <div class="text-xs font-medium">Coffee</div>
+                            <div class="text-xs text-muted">₹50</div>
+                        </button>
+                        <button onclick="quickAddPreset('lunch', 150)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">🍕</div>
+                            <div class="text-xs font-medium">Lunch</div>
+                            <div class="text-xs text-muted">₹150</div>
+                        </button>
+                        <button onclick="quickAddPreset('dinner', 300)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">🍽️</div>
+                            <div class="text-xs font-medium">Dinner</div>
+                            <div class="text-xs text-muted">₹300</div>
+                        </button>
+                        <button onclick="quickAddPreset('petrol', 500)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">⛽</div>
+                            <div class="text-xs font-medium">Petrol</div>
+                            <div class="text-xs text-muted">₹500</div>
+                        </button>
+                        <button onclick="quickAddPreset('groceries', 800)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">🛒</div>
+                            <div class="text-xs font-medium">Groceries</div>
+                            <div class="text-xs text-muted">₹800</div>
+                        </button>
+                        <button onclick="quickAddPreset('cab', 120)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">🚕</div>
+                            <div class="text-xs font-medium">Cab</div>
+                            <div class="text-xs text-muted">₹120</div>
+                        </button>
+                        <button onclick="quickAddPreset('milk', 60)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">🥛</div>
+                            <div class="text-xs font-medium">Milk</div>
+                            <div class="text-xs text-muted">₹60</div>
+                        </button>
+                        <button onclick="quickAddPreset('recharge', 299)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">📱</div>
+                            <div class="text-xs font-medium">Recharge</div>
+                            <div class="text-xs text-muted">₹299</div>
+                        </button>
+                        <button onclick="quickAddPreset('movie', 250)" class="p-3 rounded-xl bg-hover hover:bg-hover/80 transition-all text-center group">
+                            <div class="text-xl mb-1 group-hover:scale-110 transition-transform">🎬</div>
+                            <div class="text-xs font-medium">Movie</div>
+                            <div class="text-xs text-muted">₹250</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recurring Expenses -->
+                <div class="glass rounded-2xl p-5 mb-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Monthly Recurring</h3>
+                        <button onclick="openModal('recurring')" class="text-sm text-brand-400 hover:text-brand-300 transition-colors">+ Add Recurring</button>
+                    </div>
+                    <div id="recurringExpensesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                    <div id="emptyRecurring" class="hidden text-center py-6">
+                        <p class="text-sm text-muted">No recurring expenses. Add rent, subscriptions, EMIs etc.</p>
+                    </div>
+                </div>
+
+                <!-- Filters, Import & Table -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterExpenses('all')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-brand-600 text-white transition-all" data-filter="all">All</button>
+                        <button onclick="filterExpenses('food')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="food">🍔 Food</button>
+                        <button onclick="filterExpenses('transport')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="transport">🚗 Transport</button>
+                        <button onclick="filterExpenses('shopping')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="shopping">🛍️ Shopping</button>
+                        <button onclick="filterExpenses('bills')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="bills">📄 Bills</button>
+                        <button onclick="filterExpenses('entertainment')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="entertainment">🎬 Entertainment</button>
+                        <button onclick="filterExpenses('health')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="health">💊 Health</button>
+                        <button onclick="filterExpenses('other')" class="filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="other">📦 Other</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="toggleCsvImport()" class="px-4 py-2 rounded-xl bg-hover hover:bg-hover/80 text-secondary text-sm font-medium transition-all">Import CSV</button>
+                        <button onclick="openModal('expense')" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 font-medium text-sm transition-all flex items-center gap-2 shadow-lg shadow-brand-600/25 text-white">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Add Expense
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CSV Import Panel -->
+                <div id="csvImportPanel" class="hidden glass rounded-2xl p-5 mb-5">
+                    <h4 class="font-medium mb-2">Import from CSV</h4>
+                    <p class="text-sm text-muted mb-3">Paste CSV rows: <code class="text-xs bg-input px-1.5 py-0.5 rounded">description,amount,date(YYYY-MM-DD),category,note</code></p>
+                    <textarea id="csvImportInput" rows="4" class="w-full px-4 py-2.5 rounded-xl bg-input border border-input text-sm font-mono mb-3" placeholder="Grocery Shopping,850,2026-05-01,food,Weekly groceries&#10;Uber Ride,120,2026-05-01,transport,Office commute"></textarea>
+                    <div class="flex gap-2">
+                        <button onclick="importExpensesCsv()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition-all">Import</button>
+                        <button onclick="toggleCsvImport()" class="px-4 py-2 rounded-xl bg-hover hover:bg-hover/80 text-secondary text-sm font-medium transition-all">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Expense Table -->
+                <div class="glass rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="table-head">
+                                <tr>
+                                    <th class="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Date</th>
+                                    <th class="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Description</th>
+                                    <th class="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Category</th>
+                                    <th class="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Method</th>
+                                    <th class="text-right px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Amount</th>
+                                    <th class="text-center px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTable" class="divide-y divide-theme"></tbody>
+                        </table>
+                    </div>
+                    <div id="emptyExpenses" class="hidden p-12 text-center">
+                        <svg class="w-16 h-16 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-6 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        <p class="text-muted">No expenses yet. Start tracking your spending!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investments Page -->
+            <div id="page-investments" class="page-content hidden">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold">Investment Portfolio</h3>
+                        <p class="text-sm text-muted">Track your investments and returns</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="brokerSyncBtn" onclick="loadBrokerPortfolio()" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 font-medium text-sm transition-all flex items-center gap-2 shadow-lg shadow-brand-600/25 text-white">
+                            🔄 Sync from Broker
+                        </button>
+                        <button onclick="toggleImportSection()" class="px-4 py-2.5 rounded-xl bg-hover hover:bg-hover/80 font-medium text-sm transition-all flex items-center gap-2 text-secondary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Import
+                        </button>
+                        <button onclick="openModal('investment')" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-medium text-sm transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/25 text-white">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Add Investment
+                        </button>
+                    </div>
+                </div>
+                <!-- Investment Summary -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="glass rounded-2xl p-5">
+                        <p class="text-sm text-muted mb-1">Total Invested</p>
+                        <p id="totalInvested" class="text-2xl font-bold">Rs. 0.00</p>
+                    </div>
+                    <div class="glass rounded-2xl p-5">
+                        <p class="text-sm text-muted mb-1">Current Value</p>
+                        <p id="currentInvestValue" class="text-2xl font-bold text-emerald-400">Rs. 0.00</p>
+                    </div>
+                    <div class="glass rounded-2xl p-5">
+                        <p class="text-sm text-muted mb-1">Total Returns</p>
+                        <p id="totalReturns" class="text-2xl font-bold">Rs. 0.00</p>
+                    </div>
+                </div>
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+                    <div class="lg:col-span-2 glass rounded-2xl p-5">
+                        <h3 class="text-lg font-semibold mb-4">Investment Growth</h3>
+                        <div class="h-52 sm:h-60">
+                            <canvas id="investmentChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl p-5">
+                        <h3 class="text-lg font-semibold mb-4">Asset Allocation</h3>
+                        <div class="h-52 sm:h-60">
+                            <canvas id="allocationChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Collapsible Import Section -->
+                <div id="importSection" class="hidden glass rounded-2xl p-5 mb-6">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <h3 class="text-lg font-semibold">Import Mutual Funds (JSON)</h3>
+                        <button onclick="importMutualFundsFromJson()" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-sm font-medium transition-all text-white">
+                            Import JSON
+                        </button>
+                    </div>
+                    <p class="text-sm text-muted mb-3">Paste JSON array with your mutual fund details. Each entry will be added as an investment.</p>
+                    <textarea id="mfJsonInput" class="w-full min-h-32 px-4 py-3 rounded-xl bg-input border border-input text-sm font-mono" placeholder='[{"name":"HDFC Flexi Cap Fund","invested":25000,"currentValue":27450,"date":"2026-05-01","note":"SIP portfolio"}]'></textarea>
+                    <p class="text-xs text-muted mt-2">Required fields: <code>name</code>, <code>invested</code>, <code>currentValue</code>. Optional: <code>date</code>, <code>note</code>.</p>
+                </div>
+                <!-- Investment Filters -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="filterInvestments('all')" class="inv-filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-brand-600 text-white transition-all" data-filter="all">All</button>
+                    <button onclick="filterInvestments('stocks')" class="inv-filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="stocks">📈 Stocks</button>
+                    <button onclick="filterInvestments('crypto')" class="inv-filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="crypto">₿ Crypto</button>
+                    <button onclick="filterInvestments('mutual_fund')" class="inv-filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="mutual_fund">🏦 Mutual Funds</button>
+                    <button onclick="filterInvestments('bonds')" class="inv-filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="bonds">📜 Bonds</button>
+                    <button onclick="filterInvestments('real_estate')" class="inv-filter-btn px-4 py-2 rounded-xl text-sm font-medium bg-hover text-secondary hover:bg-hover/80 transition-all" data-filter="real_estate">🏠 Real Estate</button>
+                </div>
+                <!-- Investment List -->
+                <div class="glass rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="table-head">
+                                <tr>
+                                    <th class="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Asset</th>
+                                    <th class="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Type</th>
+                                    <th class="text-right px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Invested</th>
+                                    <th class="text-right px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Current Value</th>
+                                    <th class="text-right px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Return %</th>
+                                    <th class="text-center px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investmentsTable" class="divide-y divide-theme"></tbody>
+                        </table>
+                    </div>
+                    <div id="emptyInvestments" class="hidden p-12 text-center">
+                        <svg class="w-16 h-16 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        <p class="text-muted">No investments yet. Start building your portfolio!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budgets Page -->
+            <div id="page-budgets" class="page-content hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold">Monthly Budgets</h3>
+                        <p class="text-sm text-muted">Set and track your spending limits</p>
+                    </div>
+                    <button onclick="openModal('budget')" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 font-medium text-sm transition-all flex items-center gap-2 shadow-lg shadow-amber-600/25 text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Set Budget
+                    </button>
+                </div>
+                <div id="budgetCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+                <div id="emptyBudgets" class="glass rounded-2xl p-12 text-center hidden">
+                    <svg class="w-16 h-16 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <p class="text-muted">No budgets set. Create one to start tracking!</p>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="page-analytics" class="page-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="glass rounded-2xl p-5">
+                        <h3 class="text-lg font-semibold mb-4">Income vs Expenses</h3>
+                        <div class="h-52 sm:h-60">
+                            <canvas id="incomeExpenseChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl p-5">
+                        <h3 class="text-lg font-semibold mb-4">Monthly Savings</h3>
+                        <div class="h-52 sm:h-60">
+                            <canvas id="savingsChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass rounded-2xl p-5">
+                    <h3 class="text-lg font-semibold mb-4">Category Breakdown</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4" id="categoryBreakdown"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modals -->
+<div id="modalOverlay" class="fixed inset-0 z-50 hidden modal-overlay flex items-center justify-center p-4">
+    <div id="modalContent" class="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto slide-in-right">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 id="modalTitle" class="text-xl font-bold"></h3>
+                <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-hover transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form id="modalForm" onsubmit="handleFormSubmit(event)"></form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add Modal -->
+<div id="quickAddOverlay" class="fixed inset-0 z-50 hidden modal-overlay flex items-end sm:items-center justify-center p-4">
+    <div class="glass rounded-2xl w-full max-w-md slide-in-right">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold">Quick Add</h3>
+                <button onclick="closeQuickAdd()" class="p-2 rounded-lg hover:bg-hover transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="quickAddType('expense')" class="p-4 rounded-xl bg-rose-500/20 border border-rose-500/30 hover:bg-rose-500/30 transition-all text-center">
+                    <div class="text-2xl mb-1">💸</div>
+                    <div class="text-sm font-medium">Expense</div>
+                </button>
+                <button onclick="quickAddType('investment')" class="p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all text-center">
+                    <div class="text-2xl mb-1">📈</div>
+                    <div class="text-sm font-medium">Investment</div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

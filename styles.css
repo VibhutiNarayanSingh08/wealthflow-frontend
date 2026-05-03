@@ -1,0 +1,226 @@
+/* ========================================
+   WealthFlow Design System — CSS Variables
+   Toggle .dark on <html> to switch themes
+   ======================================== */
+
+:root {
+    /* Backgrounds */
+    --bg-body: #f8fafc;
+    --bg-sidebar: rgba(255, 255, 255, 0.85);
+    --bg-card: rgba(255, 255, 255, 0.75);
+    --bg-input: rgba(255, 255, 255, 0.9);
+    --bg-hover: rgba(226, 232, 240, 0.6);
+    --bg-active: linear-gradient(135deg, #6366f1, #4f46e5);
+    --bg-table-head: rgba(241, 245, 249, 0.8);
+    --bg-progress: #e2e8f0;
+    --bg-badge: rgba(99, 102, 241, 0.1);
+
+    /* Text */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-placeholder: #94a3b8;
+    --text-on-primary: #ffffff;
+
+    /* Borders */
+    --border-default: rgba(148, 163, 184, 0.3);
+    --border-input: #cbd5e1;
+    --border-focus: #6366f1;
+
+    /* Scrollbar */
+    --scroll-track: #e2e8f0;
+    --scroll-thumb: #6366f1;
+
+    /* Chart */
+    --chart-grid: rgba(148, 163, 184, 0.2);
+    --chart-text: #64748b;
+    --chart-point-border: #ffffff;
+}
+
+.dark {
+    --bg-body: #0f172a;
+    --bg-sidebar: rgba(15, 23, 42, 0.85);
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --bg-input: rgba(30, 41, 59, 0.6);
+    --bg-hover: rgba(51, 65, 85, 0.5);
+    --bg-table-head: rgba(30, 41, 59, 0.5);
+    --bg-progress: #334155;
+    --bg-badge: rgba(99, 102, 241, 0.15);
+
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-placeholder: #64748b;
+
+    --border-default: rgba(99, 102, 241, 0.1);
+    --border-input: #334155;
+
+    --scroll-track: #1e293b;
+    --scroll-thumb: #6366f1;
+
+    --chart-grid: rgba(100, 116, 139, 0.1);
+    --chart-text: #94a3b8;
+    --chart-point-border: #1e293b;
+}
+
+/* ========================================
+   Base & Utilities
+   ======================================== */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: 3px;
+}
+
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+}
+
+/* Glass card effect */
+.glass {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-default);
+}
+
+/* Card hover */
+.card-hover {
+    transition: all 0.3s ease;
+}
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.15);
+}
+
+/* Nav active state */
+.nav-active {
+    background: var(--bg-active);
+    color: white !important;
+}
+
+/* Modal overlay */
+.modal-overlay {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+}
+.dark .modal-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+/* Input base styling */
+input, select, textarea {
+    background: var(--bg-input);
+    border-color: var(--border-input);
+    color: var(--text-primary);
+}
+input::placeholder, textarea::placeholder {
+    color: var(--text-placeholder);
+}
+input:focus, select:focus, textarea:focus {
+    border-color: var(--border-focus);
+    outline: none;
+}
+
+/* Date picker icon in dark mode */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* Progress bar track */
+.progress-track {
+    background: var(--bg-progress);
+}
+
+/* Table styles */
+.table-head {
+    background: var(--bg-table-head);
+}
+
+/* Tooltip */
+.tooltip {
+    position: relative;
+}
+.tooltip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+.tooltip:hover::after {
+    opacity: 1;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+.slide-up {
+    animation: slideUp 0.5s ease-out;
+}
+.slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Theme-aware text utilities */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-placeholder { color: var(--text-placeholder); }
+
+/* Theme-aware background utilities */
+.bg-body { background: var(--bg-body); }
+.bg-sidebar { background: var(--bg-sidebar); }
+.bg-card { background: var(--bg-card); }
+.bg-input { background: var(--bg-input); }
+.bg-hover { background: var(--bg-hover); }
+
+/* Theme-aware border utilities */
+.border-theme { border-color: var(--border-default); }
+.border-input { border-color: var(--border-input); }
+
+/* Sidebar width on desktop */
+@media (min-width: 1024px) {
+    .sidebar-width {
+        width: 260px;
+    }
+}
