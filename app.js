@@ -80,8 +80,16 @@ function showAuthError(msg) {
     el.classList.remove('hidden');
 }
 
+function showAuthStatus(msg) {
+    const el = document.getElementById('authStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
 async function handleLogin(e) {
     e.preventDefault();
+    showAuthStatus('Step 1/4: Sending login...');
     try {
         const form = e.target;
         console.log('[Auth] Logging in...');
@@ -92,21 +100,25 @@ async function handleLogin(e) {
         });
         const data = await res.json();
         if (!res.ok) {
+            showAuthStatus('');
             showAuthError(data.detail || 'Login failed');
             return;
         }
         console.log('[Auth] Login success, token received');
+        showAuthStatus('Step 2/4: Login OK, loading session...');
         setToken(data.token);
         await loadUserSession();
         console.log('[Auth] loadUserSession complete');
     } catch (err) {
         console.error('[Auth] Login error:', err);
+        showAuthStatus('Error: ' + err.message);
         showAuthError('Something went wrong. Check console.');
     }
 }
 
 async function handleRegister(e) {
     e.preventDefault();
+    showAuthStatus('Step 1/4: Creating account...');
     try {
         const form = e.target;
         console.log('[Auth] Registering...');
@@ -117,15 +129,18 @@ async function handleRegister(e) {
         });
         const data = await res.json();
         if (!res.ok) {
+            showAuthStatus('');
             showAuthError(data.detail || 'Registration failed');
             return;
         }
         console.log('[Auth] Register success, token received');
+        showAuthStatus('Step 2/4: Account created, loading session...');
         setToken(data.token);
         await loadUserSession();
         console.log('[Auth] loadUserSession complete');
     } catch (err) {
         console.error('[Auth] Register error:', err);
+        showAuthStatus('Error: ' + err.message);
         showAuthError('Something went wrong. Check console.');
     }
 }
@@ -135,8 +150,8 @@ async function loadUserSession() {
         const token = getToken();
         if (!token) { showAuthScreen(); return; }
 
+        showAuthStatus('Step 3/4: Validating token...');
         console.log('[Auth] Validating token...');
-        // Validate token and get user profile
         const meRes = await apiGet('/auth/me');
         if (!meRes || meRes.detail) {
             console.log('[Auth] Token invalid, showing login');
@@ -150,7 +165,7 @@ async function loadUserSession() {
         updateUserUI();
         console.log('[Auth] User loaded:', meRes.email);
 
-        // Load user data from backend
+        showAuthStatus('Step 3/4: Fetching your data...');
         console.log('[Auth] Fetching user data...');
         const [expRes, invRes, budRes, recRes] = await Promise.all([
             apiGet('/api/expenses'),
@@ -165,18 +180,20 @@ async function loadUserSession() {
         if (recRes) state.recurring = recRes;
         console.log('[Auth] Data loaded:', state.expenses.length, 'expenses');
 
-        // Fallback: seed demo data if completely empty (first time user)
         if (state.expenses.length === 0 && state.investments.length === 0) {
             seedSampleData();
             await syncAllToBackend();
         }
 
         saveDataLocal();
+        showAuthStatus('Step 4/4: Done! Loading app...');
         showAppScreen();
         initApp();
+        showAuthStatus('');
         console.log('[Auth] App initialized');
     } catch (err) {
         console.error('[Auth] loadUserSession error:', err);
+        showAuthStatus('Error: ' + err.message);
         showAuthScreen();
         showAuthError('Failed to load session. Check console.');
     }
