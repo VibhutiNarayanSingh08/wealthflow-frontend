@@ -259,7 +259,9 @@ function updateUserUI() {
 
 // ==================== API (with auth) ====================
 // Change this to your production backend URL when deploying
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE)
+    ? import.meta.env.VITE_API_BASE
+    : (window.location.hostname === 'localhost' ? '' : 'https://wealthflow-api-rz5w.onrender.com');
 
 function apiHeaders() {
     const h = { 'Content-Type': 'application/json' };
