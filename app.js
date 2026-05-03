@@ -186,7 +186,7 @@ function updateUserUI() {
 
 // ==================== API (with auth) ====================
 // Change this to your production backend URL when deploying
-const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://your-backend-url.onrender.com';
+const API_BASE = window.location.hostname === 'localhost' ? '' : 'https://wealthflow-api-rz5w.onrender.com';
 
 function apiHeaders() {
     const h = { 'Content-Type': 'application/json' };
