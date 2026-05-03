@@ -83,7 +83,7 @@ function showAuthError(msg) {
 async function handleLogin(e) {
     e.preventDefault();
     const form = e.target;
-    const res = await fetch('/auth/login', {
+    const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email.value, password: form.password.value })
@@ -100,7 +100,7 @@ async function handleLogin(e) {
 async function handleRegister(e) {
     e.preventDefault();
     const form = e.target;
-    const res = await fetch('/auth/register', {
+    const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email.value, password: form.password.value, name: form.name.value })
