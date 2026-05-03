@@ -63,6 +63,28 @@ let state = {
     charts: {}
 };
 
+function seedSampleData() {
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    state.expenses = [
+        { id: generateId(), description: 'Lunch at office', amount: 250, date: today, category: 'food', payment_method: 'upi', note: '' },
+        { id: generateId(), description: 'Petrol', amount: 1200, date: yesterday, category: 'transport', payment_method: 'card', note: '' },
+        { id: generateId(), description: 'Netflix subscription', amount: 649, date: yesterday, category: 'entertainment', payment_method: 'upi', note: '' }
+    ];
+    state.investments = [
+        { id: generateId(), name: 'Nifty 50 Index Fund', type: 'mutual_fund', invested: 50000, currentValue: 54200, date: '2026-01-15', note: '' },
+        { id: generateId(), name: 'Reliance Industries', type: 'stock', invested: 25000, currentValue: 27800, date: '2026-02-10', note: '' }
+    ];
+    state.budgets = [
+        { id: generateId(), category: 'food', limit: 8000 },
+        { id: generateId(), category: 'transport', limit: 5000 }
+    ];
+    state.recurring = [
+        { id: generateId(), name: 'Netflix', amount: 649, category: 'entertainment', frequency: 'monthly', day_of_month: 5, active: 1, last_paid: '' },
+        { id: generateId(), name: 'Mobile Recharge', amount: 399, category: 'utilities', frequency: 'monthly', day_of_month: 1, active: 1, last_paid: '' }
+    ];
+}
+
 // ==================== AUTH ====================
 function getToken() { return localStorage.getItem(STORAGE_KEYS.token); }
 function setToken(t) { localStorage.setItem(STORAGE_KEYS.token, t); }
